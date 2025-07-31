@@ -317,7 +317,7 @@ class PortfolioOptimizer:
         
         for date in rebalance_dates:
             # 윈도우 데이터 추출
-            end_idx = self.returns.index.get_loc(date, method='nearest')
+            end_idx = self.returns.index.get_loc(date)
             start_idx = max(0, end_idx - window_days)
             
             window_returns = self.returns.iloc[start_idx:end_idx]
