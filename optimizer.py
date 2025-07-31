@@ -36,33 +36,51 @@ class PortfolioOptimizer:
         self.cc = CryptoCurrencies(key=self.api_key, output_format='pandas')
 
     def fetch_data(self):
-        print(f"{self.symbol1}-{self.market}와 {self.symbol2}-{self.market} 데이터를 다운로드 중...")
+        # Create data directory if it doesn't exist
+        os.makedirs('data', exist_ok=True)
+        data_file = f'data/data_{self.symbol1}_{self.symbol2}_{self.market}.pkl'
+        
+        # Check if data file exists
+        if os.path.exists(data_file):
+            print(f"Loading data from {data_file}...")
+            self.data = pd.read_pickle(data_file)
+            print("Data loaded successfully!")
+        else:
+            print(f"{self.symbol1}-{self.market}와 {self.symbol2}-{self.market} 데이터를 다운로드 중...")
 
-        try:
-            data1, _ = self.cc.get_digital_currency_daily(symbol=self.symbol1, market=self.market)
-            print("--- API Response for symbol1 ---")
-            print(data1)
-            print("---------------------------------")
-            data2, _ = self.cc.get_digital_currency_daily(symbol=self.symbol2, market=self.market)
-            print("--- API Response for symbol2 ---")
-            print(data2)
-            print("---------------------------------")
-            
-            data1 = data1.sort_index()
-            data2 = data2.sort_index()
-            
-            close_col_name = f'4a. close ({self.market})'
+            try:
+                data1, _ = self.cc.get_digital_currency_daily(symbol=self.symbol1, market=self.market)
+                print("--- API Response for symbol1 ---")
+                print(data1)
+                print("---------------------------------")
+                data2, _ = self.cc.get_digital_currency_daily(symbol=self.symbol2, market=self.market)
+                print("--- API Response for symbol2 ---")
+                print(data2)
+                print("---------------------------------")
+                
+                data1 = data1.sort_index()
+                data2 = data2.sort_index()
+                
+                close_col_name = f'4. close'
 
-            df = pd.DataFrame({
-                f'{self.symbol1}_price': data1[close_col_name],
-                f'{self.symbol2}_price': data2[close_col_name]
-            }).dropna()
+                df = pd.DataFrame({
+                    f'{self.symbol1}_price': data1[close_col_name],
+                    f'{self.symbol2}_price': data2[close_col_name]
+                }).dropna()
 
-            self.data = df
+                # Save to pickle
+                df.to_pickle(data_file)
+                print(f"Data saved to {data_file}")
+                
+                self.data = df
+                
+            except Exception as e:
+                print(f"Error fetching data: {e}")
+                return
             
-        except Exception as e:
-            print(f"Alpha Vantage 데이터 다운로드 실패: {e}")
-            return
+        # except Exception as e:
+        #     print(f"Alpha Vantage 데이터 다운로드 실패: {e}")
+        #     return
 
         self.returns = pd.DataFrame({
             f'{self.symbol1}_return': self.data[f'{self.symbol1}_price'].pct_change(),
